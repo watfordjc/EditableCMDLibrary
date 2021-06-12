@@ -19,6 +19,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// </summary>
         private ConsoleOutput()
         {
+
         }
 
         /// <summary>
