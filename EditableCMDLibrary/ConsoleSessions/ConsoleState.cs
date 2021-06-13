@@ -37,6 +37,10 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// An event that fires when <see cref="CurrentDirectory"/> changes.
         /// </summary>
         public event EventHandler<string> CurrentDirectoryChanged;
+        /// <summary>
+        /// An event that fires when this console session is closing from a call to <see cref="ExitCleanup"/>.
+        /// </summary>
+        public event EventHandler<bool> SessionClosing;
 
         #endregion
 
@@ -475,6 +479,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         {
             // End the console input read loop
             Closing = true;
+            SessionClosing?.Invoke(this, true);
 
             // Delete the file storing %CD%
             PathLogger.DeleteFile();
