@@ -38,7 +38,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// </summary>
         public event EventHandler<string> CurrentDirectoryChanged;
         /// <summary>
-        /// An event that fires when this console session is closing from a call to <see cref="ExitCleanup"/>.
+        /// An event that fires when this console session is closing from a call to <see cref="EndSession"/>.
         /// </summary>
         public event EventHandler<bool> SessionClosing;
 
@@ -473,13 +473,21 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         }
 
         /// <summary>
+        /// End the console session this <see cref="ConsoleState"/> is for is ending.
+        /// </summary>
+        public void EndSession()
+        {
+            SessionClosing?.Invoke(this, true);
+            ExitCleanup();
+        }
+
+        /// <summary>
         /// Cleanup before exiting - endReadConsoleInput=true ends the console input thread, so the end of this method is right before exit
         /// </summary>
         private void ExitCleanup()
         {
             // End the console input read loop
             Closing = true;
-            SessionClosing?.Invoke(this, true);
 
             // Delete the file storing %CD%
             PathLogger.DeleteFile();
@@ -510,7 +518,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                 case NativeMethods.ConsoleControlType.CTRL_CLOSE_EVENT:
                 case NativeMethods.ConsoleControlType.CTRL_LOGOFF_EVENT:
                 case NativeMethods.ConsoleControlType.CTRL_SHUTDOWN_EVENT:
-                    ExitCleanup();
+                    EndSession();
                     return true;
                 case NativeMethods.ConsoleControlType.CTRL_C_EVENT:
                 case NativeMethods.ConsoleControlType.CTRL_BREAK_EVENT:
