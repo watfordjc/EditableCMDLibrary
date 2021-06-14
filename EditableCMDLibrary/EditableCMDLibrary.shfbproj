@@ -45,12 +45,12 @@
 <DocumentationSource sourceFile="bin\Release\net5.0\EditableCMDLibrary.dll" /></DocumentationSources>
     <ProjectSummary>The namespace for the main Library of EditableCMD and its plugins.</ProjectSummary>
     <NamespaceSummaries>
-      <NamespaceSummaryItem name="uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions" isDocumented="True" xmlns="">The namespace containing classes for managing console state.</NamespaceSummaryItem>
-      <NamespaceSummaryItem name="uk.JohnCook.dotnet.EditableCMDLibrary.InputProcessing" isDocumented="True" xmlns="">The namespace containing classes for handling input.</NamespaceSummaryItem>
-      <NamespaceSummaryItem name="uk.JohnCook.dotnet.EditableCMDLibrary.Interop" isDocumented="True" xmlns="">The namespace for NativeMethods classes used for platform interop (P/Invoke).</NamespaceSummaryItem>
-      <NamespaceSummaryItem name="uk.JohnCook.dotnet.EditableCMDLibrary.Logging" isDocumented="True" xmlns="">The namespace for classes used for logging and file writing.</NamespaceSummaryItem>
-      <NamespaceSummaryItem name="uk.JohnCook.dotnet.EditableCMDLibrary.Utils" isDocumented="True" xmlns="">The namespace for utility/helper method classes.</NamespaceSummaryItem>
-    </NamespaceSummaries>
+      <NamespaceSummaryItem name="uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions" isDocumented="True">The namespace containing classes for managing console state.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="uk.JohnCook.dotnet.EditableCMDLibrary.InputProcessing" isDocumented="True">The namespace containing classes for handling input.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="uk.JohnCook.dotnet.EditableCMDLibrary.Interop" isDocumented="True">The namespace for NativeMethods classes used for platform interop (P/Invoke).</NamespaceSummaryItem>
+<NamespaceSummaryItem name="uk.JohnCook.dotnet.EditableCMDLibrary.Logging" isDocumented="True">The namespace for classes used for logging and file writing.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="uk.JohnCook.dotnet.EditableCMDLibrary.Utils" isDocumented="True">The namespace for utility/helper method classes.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="uk.JohnCook.dotnet.EditableCMDLibrary.Commands" isDocumented="True">The namespace for EditableCMD internal commands and plugin interfaces.</NamespaceSummaryItem></NamespaceSummaries>
   </PropertyGroup>
   <!-- There are no properties for these groups.  AnyCPU needs to appear in order for Visual Studio to perform
 			 the build.  The others are optional common platform types that may appear. -->
