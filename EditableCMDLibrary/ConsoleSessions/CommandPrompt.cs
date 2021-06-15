@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
+using System.Text;
 using System.Threading;
+using uk.JohnCook.dotnet.EditableCMDLibrary.Interop;
 using uk.JohnCook.dotnet.EditableCMDLibrary.Utils;
 
 namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
@@ -65,6 +68,10 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// </summary>
         public bool Finished { get; private set; }
 
+        private readonly ProcessStartInfo processStartInfo;
+        private bool aborted = false;
+        private readonly CancellationTokenSource cancellationTokenSource;
+
         /// <summary>
         /// Create a new command prompt process.
         /// </summary>
@@ -90,6 +97,12 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                 Output = new();
             }
             Completed += OnComplete;
+            processStartInfo = new()
+            {
+                FileName = state.CmdProcessStartInfo.FileName
+            };
+            aborted = false;
+            cancellationTokenSource = new();
             ProcessCommand();
         }
 #nullable restore
@@ -104,11 +117,13 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             // Start a self-closing cmd process with entered command, then silently store current directory
             string environmentCommand = UpdateEnvironment ? string.Format(" & SET >{0}", state.EnvLogger.LogFile) : string.Empty;
             string directoryCommand = UpdateCurrentDirectory ? string.Format(" & CD >{0}", state.PathLogger.LogFile) : string.Empty;
-            state.CmdProcessStartInfo.Arguments = string.Format("{0}{1}/D /C {2}{3}{4}", state.StartupParams.CmdParams, state.StartupParams.CmdParams != string.Empty ? " " : "", Command, directoryCommand, environmentCommand);
+            processStartInfo.Arguments = string.Format("{0}{1}/D /C {2}{3}{4}", state.StartupParams.CmdParams, state.StartupParams.CmdParams != string.Empty ? " " : "", Command, directoryCommand, environmentCommand);
+            processStartInfo.WorkingDirectory = state.CurrentDirectory;
             if (StoreOutput)
             {
-                state.CmdProcessStartInfo.UseShellExecute = false;
-                state.CmdProcessStartInfo.RedirectStandardOutput = true;
+                processStartInfo.UseShellExecute = false;
+                processStartInfo.RedirectStandardOutput = true;
+                processStartInfo.StandardOutputEncoding = state.OutputEncoding;
                 try
                 {
                     cmdThread = new Thread(ProcessStoreOutput);
@@ -142,6 +157,25 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         }
 
         /// <summary>
+        /// Start execution of the <see cref="CommandPrompt"/> <see cref="Process"/>.
+        /// </summary>
+        /// <returns>False if the thread was not running. False if the <see cref="Process"/> is null.</returns>
+        public bool Stop()
+        {
+            if (cmdThread == null && cmdThread?.IsAlive != true)
+            {
+                return false;
+            }
+            else
+            {
+                cancellationTokenSource.Cancel();
+                aborted = true;
+                NativeMethods.SetStdHandle(NativeMethods.STD_OUTPUT_HANDLE, state.StandardOutput.Handle);
+                return true;
+            }
+        }
+
+        /// <summary>
         /// Waits for the <see cref="CommandPrompt"/> <see cref="Process"/> to exit.
         /// </summary>
         public void WaitForExit()
@@ -159,10 +193,10 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// </summary>
         private void ProcessStoreOutput()
         {
-            state.CmdProcess = Process.Start(state.CmdProcessStartInfo);
+            state.CmdProcess = Process.Start(processStartInfo);
             Started?.Invoke(this, true);
             string currentLine = string.Empty;
-            while (!state.CmdProcess.StandardOutput.EndOfStream)
+            while (!aborted && !state.CmdProcess.StandardOutput.EndOfStream)
             {
                 currentLine = state.CmdProcess.StandardOutput.ReadLine();
                 if (currentLine == null)
@@ -176,8 +210,15 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                     Console.WriteLine(currentLine);
                 }
             }
-            state.CmdProcess.WaitForExit();
-            ExitCode = state.CmdProcess.ExitCode;
+            if (!aborted)
+            {
+                state.CmdProcess.WaitForExitAsync(cancellationTokenSource.Token).GetAwaiter().GetResult();
+                ExitCode = state.CmdProcess.ExitCode;
+            }
+            else
+            {
+                state.CmdProcess = new() { StartInfo = state.CmdProcessStartInfo };
+            }
             Finished = true;
             Completed?.Invoke(this, true);
         }
@@ -187,11 +228,19 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// </summary>
         private void ProcessNoStoreOutput()
         {
-            state.CmdProcess = Process.Start(state.CmdProcessStartInfo);
+            state.CmdProcess = Process.Start(processStartInfo);
             Started?.Invoke(this, true);
             state.CmdProcess.WaitForExit();
-            ExitCode = state.CmdProcess.ExitCode;
+            if (!aborted)
+            {
+                ExitCode = state.CmdProcess.ExitCode;
+            }
+            else
+            {
+                state.CmdProcess = new() { StartInfo = state.CmdProcessStartInfo };
+            }
             Finished = true;
+            state.CmdRunning = false;
             Completed?.Invoke(this, true);
         }
 
@@ -207,7 +256,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                 return;
             }
             // Copy environment variables to current environment
-            if (UpdateEnvironment && File.Exists(state.EnvLogger.LogFile))
+            if (!aborted && UpdateEnvironment && File.Exists(state.EnvLogger.LogFile))
             {
                 FileInfo envFileInfo = new(state.EnvLogger.LogFile);
                 bool envFileAccessible = FileUtils.WaitForFile(envFileInfo, 1000);
@@ -225,7 +274,6 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                     }
                 }
             }
-            state.CmdRunning = false;
             eventSlim.Set();
         }
 

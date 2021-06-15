@@ -172,6 +172,15 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// A boolean value indicating if <see cref="CmdProcess"/> is currently running.
         /// </summary>
         public volatile bool CmdRunning = false;
+        /// <summary>
+        /// Input encoding for console.
+        /// </summary>
+        public Encoding InputEncoding;
+        /// <summary>
+        /// Output encoding for console.
+        /// </summary>
+        public Encoding OutputEncoding;
+
 
         private readonly string sessionGuid;
 
@@ -242,8 +251,10 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             Console.Title = title;
 
             // Set input and output encoding
-            Console.InputEncoding = StartupParams.OutputEncoding;
-            Console.OutputEncoding = StartupParams.OutputEncoding;
+            InputEncoding = StartupParams.OutputEncoding;
+            OutputEncoding = StartupParams.OutputEncoding;
+            Console.InputEncoding = InputEncoding;
+            Console.OutputEncoding = OutputEncoding;
         }
 
         /// <summary>
@@ -462,10 +473,15 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             }
             else if (e.SpecialKey == ConsoleSpecialKey.ControlC)
             {
-                if (!CmdRunning)
+                e.Cancel = true;
+                InputLogger.Log(FileLogger.FormatCancelledInputLogEntry(DateTime.UtcNow, CurrentDirectory, Input.Text.ToString(), e.SpecialKey));
+                // Add command to command history if Ctrl+C'd a child process, otherwise don't
+                if (CmdRunning)
                 {
-                    e.Cancel = true;
-                    InputLogger.Log(FileLogger.FormatCancelledInputLogEntry(DateTime.UtcNow, CurrentDirectory, Input.Text.ToString(), e.SpecialKey));
+                    AddInputToCommandHistory();
+                }
+                else
+                {
                     ConsoleOutput.WriteLine("\n");
                     ConsoleOutput.WritePrompt(this, false);
                 }

@@ -364,6 +364,21 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Interop
         /// </summary>
         public const int STD_ERROR_HANDLE = -12;
 
+        /// <summary>
+        /// <para>
+        /// Sets the handle for the specified standard device (standard input, standard output, or standard error).
+        /// </para>
+        /// <para>
+        /// Microsoft Documentation: <seealso href="https://docs.microsoft.com/en-us/windows/console/setstdhandle">SetStdHandle function</seealso>
+        /// </para>
+        /// </summary>
+        /// <param name="nStdHandle">The standard device for which the handle is to be set.</param>
+        /// <param name="hHandle">The handle for the standard device.</param>
+        /// <returns>If the function succeeds, the return value is nonzero. If the function fails, the return value is zero. To get extended error information, call <see cref="GetLastError">GetLastError</see>.</returns>
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern IntPtr SetStdHandle(int nStdHandle, IntPtr hHandle);
+
+
         #endregion
 
         #region WriteConsoleInput(), ReadConsoleInput(), PeakConsoleInput()

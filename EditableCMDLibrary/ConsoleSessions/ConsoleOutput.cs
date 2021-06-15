@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -75,6 +76,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                 state.AddInputToCommandHistory();
             }
             state.InputClear();
+            state.CmdRunning = false;
         }
         #endregion
 
