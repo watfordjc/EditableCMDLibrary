@@ -96,6 +96,10 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         public volatile bool Closing = false;
 
         /// <summary>
+        /// Application's name
+        /// </summary>
+        public string ApplicationName { get; private set; }
+        /// <summary>
         /// Command line parameters
         /// </summary>
         public CommandPromptParams StartupParams { get; private set; }
@@ -189,8 +193,10 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// </summary>
         /// <param name="startupParams">The parsed command line arguments used to start the application.</param>
         /// <param name="guid">A unique <see cref="Guid"/> for the session ID, or <see cref="Guid.Empty"/> to use a shared (DEBUG) session ID.</param>
-        public ConsoleState(CommandPromptParams startupParams, Guid guid)
+        /// <param name="applicationName">Application's name.</param>
+        public ConsoleState(CommandPromptParams startupParams, Guid guid, string applicationName)
         {
+            ApplicationName = applicationName;
             StartupParams = startupParams;
             InitConsole();
             StandardInput = new InputHandle(NativeMethods.STD_INPUT_HANDLE);
@@ -199,6 +205,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             {
                 StandardOutput.SetMode(StandardOutput.OriginalMode | NativeMethods.ENABLE_VIRTUAL_TERMINAL_PROCESSING);
             }
+            sessionGuid = guid == Guid.Empty ? strings.debugSessionGuid : guid.ToString("B");
             InitFileLogging();
             DrivePaths = new();
             ChangeCurrentDirectory(StringUtils.DefaultWorkingDirectory());
@@ -213,7 +220,6 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             {
                 StartInfo = CmdProcessStartInfo
             };
-            sessionGuid = guid == Guid.Empty ? strings.debugSessionGuid : guid.ToString("B");
         }
 
         /// <summary>
@@ -221,13 +227,17 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// </summary>
         private void InitFileLogging()
         {
-            PathLogger = new FileLogger(directory: Path.GetTempPath(),
+            // Path "%Temp%\EditableCMD\guid.txt"
+            PathLogger = new FileLogger(directory: string.Join(Path.DirectorySeparatorChar, Path.TrimEndingDirectorySeparator(Path.GetTempPath()), ApplicationName),
                 file: string.Concat(sessionGuid, ".txt"),
                 description: "session path store");
-            EnvLogger = new FileLogger(directory: Path.GetTempPath(),
+            // Path "%Temp%\EditableCMD\guid.env.txt"
+            EnvLogger = new FileLogger(directory: string.Join(Path.DirectorySeparatorChar, Path.TrimEndingDirectorySeparator(Path.GetTempPath()), ApplicationName),
                 file: string.Concat(sessionGuid, ".env.txt"),
                 description: "session environment variables store");
-            InputLogger = new FileLogger(directory: string.Concat(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Path.DirectorySeparatorChar, "CmdLogs", Path.DirectorySeparatorChar),
+            DateTime now = DateTime.UtcNow;
+            // Path "%LocalAppData%\EditableCMD\Logs\Year\Month\Logfile.txt"
+            InputLogger = new FileLogger(directory: string.Join(Path.DirectorySeparatorChar, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ApplicationName, "Logs", now.ToString("yyyy"), now.ToString("MM - MMMM yyyy")),
                 file: string.Concat(DateTime.Now.ToString(strings.logDateFormat), ".txt"),
                 description: "session log");
         }
