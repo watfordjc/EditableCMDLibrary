@@ -58,14 +58,17 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             }
             if (state.EchoEnabled)
             {
-                string newCurrentDirectory = File.ReadLines(state.PathLogger.LogFile).First();
-                char newDriveLetter = newCurrentDirectory.ToLower()[0];
-                if (!state.DrivePaths.ContainsKey(state.CurrentDriveLetter))
+                string newCurrentDirectory = File.ReadLines(state.PathLogger.LogFile).FirstOrDefault();
+                if (newCurrentDirectory != default)
                 {
-                    state.DrivePaths[state.CurrentDriveLetter] = state.CurrentDirectory;
+                    char newDriveLetter = newCurrentDirectory.ToLower()[0];
+                    if (!state.DrivePaths.ContainsKey(state.CurrentDriveLetter))
+                    {
+                        state.DrivePaths[state.CurrentDriveLetter] = state.CurrentDirectory;
+                    }
+                    state.DrivePaths[newDriveLetter] = newCurrentDirectory;
+                    state.ChangeCurrentDirectory(newCurrentDirectory);
                 }
-                state.DrivePaths[newDriveLetter] = newCurrentDirectory;
-                state.ChangeCurrentDirectory(newCurrentDirectory);
                 Console.Write(string.Concat(state.CurrentDirectory, ">"));
             }
             NativeMethods.COORD cursorPosition = ConsoleCursorUtils.GetCurrentCursorPosition();
