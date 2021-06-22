@@ -119,35 +119,92 @@
   </resheader>
   <data name="commandPromptFilename" xml:space="preserve">
     <value>cmd.exe</value>
+    <comment>Command Prompt filename</comment>
+  </data>
+  <data name="commandPromptHeaderFormat" xml:space="preserve">
+    <value>{0}
+{1}
+</value>
+    <comment>Header for command prompt (version + copyright) string format</comment>
+  </data>
+  <data name="commandPromptVerFormat" xml:space="preserve">
+    <value>{0} [Version {1}]</value>
+    <comment>Command prompt version string format</comment>
+  </data>
+  <data name="commandPromptWindowsOSCopyright" xml:space="preserve">
+    <value>(c) Microsoft Corporation. All Rights Reserved.</value>
+    <comment>Command prompt copyright notice</comment>
+  </data>
+  <data name="commandPromptWindowsOSName" xml:space="preserve">
+    <value>Microsoft Windows</value>
+    <comment>OS name for Windows in VER</comment>
   </data>
   <data name="commandPromptWindowTitle" xml:space="preserve">
     <value>Command Prompt</value>
+    <comment>Command Prompt default window title</comment>
   </data>
   <data name="debugSessionGuid" xml:space="preserve">
     <value>{1AAAF7F5-4BFC-40B3-B79B-7AC99E426951}</value>
+    <comment>Guid for debugging console sessions</comment>
+  </data>
+  <data name="envKeyCommandSpecifier" xml:space="preserve">
+    <value>COMSPEC</value>
+    <comment>Environment variable name for %ComSpec%</comment>
   </data>
   <data name="logCtrlBreak" xml:space="preserve">
     <value>Ctrl+Break</value>
+    <comment>Text representation of Ctrl+Break keypress for logs</comment>
   </data>
   <data name="logCtrlC" xml:space="preserve">
     <value>Ctrl+C</value>
+    <comment>Text representation of Ctrl+C keypress for logs</comment>
   </data>
   <data name="logDateFormat" xml:space="preserve">
     <value>yyyy-MM-ddTHHmmss.ffff</value>
+    <comment>Log date string format</comment>
   </data>
   <data name="logDateTimezoneZulu" xml:space="preserve">
     <value>Z</value>
+    <comment>Log date string Zulu timezone</comment>
   </data>
   <data name="logEnter" xml:space="preserve">
     <value>Enter</value>
+    <comment>Text representation of Enter keypress for logs</comment>
   </data>
   <data name="logPrecedingCharacter" xml:space="preserve">
     <value>[</value>
+    <comment>Log prefix character around dates, keypresses, etc.</comment>
   </data>
   <data name="logProceedingCharacter" xml:space="preserve">
     <value>]</value>
+    <comment>Log suffix character around dates, keypresses, etc.</comment>
   </data>
-  <data name="netCommandError" xml:space="preserve">
-    <value>System error {0} has occurred.</value>
+  <data name="netCommandErrorFormat" xml:space="preserve">
+    <value>System error {0} has occurred.
+
+</value>
+    <comment>NET.exe error string format</comment>
+  </data>
+  <data name="netCommandStatusFormat" xml:space="preserve">
+    <value>{0}
+
+</value>
+    <comment>NET.exe status string format</comment>
+  </data>
+  <data name="win10RegKeyUBR" xml:space="preserve">
+    <value>SOFTWARE\Microsoft\Windows NT\CurrentVersion</value>
+    <comment>Registry sub-key for updateBuildRevision</comment>
+  </data>
+  <data name="win10RegNameUBR" xml:space="preserve">
+    <value>UBR</value>
+    <comment>Registry value name for updateBuildRevision</comment>
+  </data>
+  <data name="win10VersionDefaultUBR" xml:space="preserve">
+    <value>0</value>
+    <comment>Default value for updateBuildRevision</comment>
+  </data>
+  <data name="win10VersionFormat" xml:space="preserve">
+    <value>{0}.{1}.{2}.{3}</value>
+    <comment>Windows 10 major.minor.build.updateBuildRevision version string format</comment>
   </data>
 </root>

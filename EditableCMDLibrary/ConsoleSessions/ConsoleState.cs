@@ -208,13 +208,13 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             sessionGuid = guid == Guid.Empty ? strings.debugSessionGuid : guid.ToString("B");
             InitFileLogging();
             DrivePaths = new();
-            ChangeCurrentDirectory(StringUtils.DefaultWorkingDirectory());
+            ChangeCurrentDirectory(StringUtils.GetDefaultWorkingDirectory());
             EchoEnabled = true;
             Input = new();
             autoComplete = new(this);
             CmdProcessStartInfo = new()
             {
-                FileName = StringUtils.ComSpec()
+                FileName = StringUtils.GetComSpec()
             };
             CmdProcess = new()
             {
@@ -257,7 +257,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
 
             // Emulate cmd.exe window title
             NativeMethods.GetStartupInfo(out NativeMethods.STARTUPINFO startupInfo);
-            title = startupInfo.lpTitle.EndsWith(strings.commandPromptFilename) ? Console.Title = StringUtils.ComSpec() : strings.commandPromptWindowTitle;
+            title = startupInfo.lpTitle.EndsWith(strings.commandPromptFilename) ? Console.Title = StringUtils.GetComSpec() : strings.commandPromptWindowTitle;
             Console.Title = title;
 
             // Set input and output encoding
@@ -379,7 +379,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             CurrentDirectory = s;
             if (CmdProcessStartInfo == null)
             {
-                CmdProcessStartInfo = new ProcessStartInfo(StringUtils.ComSpec())
+                CmdProcessStartInfo = new ProcessStartInfo(StringUtils.GetComSpec())
                 {
                     WorkingDirectory = s
                 };

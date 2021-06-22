@@ -70,6 +70,44 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0}
+        ///{1}
+        ///.
+        /// </summary>
+        public static string commandPromptHeaderFormat {
+            get {
+                return ResourceManager.GetString("commandPromptHeaderFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} [Version {1}].
+        /// </summary>
+        public static string commandPromptVerFormat {
+            get {
+                return ResourceManager.GetString("commandPromptVerFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (c) Microsoft Corporation. All Rights Reserved..
+        /// </summary>
+        public static string commandPromptWindowsOSCopyright {
+            get {
+                return ResourceManager.GetString("commandPromptWindowsOSCopyright", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Microsoft Windows.
+        /// </summary>
+        public static string commandPromptWindowsOSName {
+            get {
+                return ResourceManager.GetString("commandPromptWindowsOSName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Command Prompt.
         /// </summary>
         public static string commandPromptWindowTitle {
@@ -84,6 +122,15 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary {
         public static string debugSessionGuid {
             get {
                 return ResourceManager.GetString("debugSessionGuid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to COMSPEC.
+        /// </summary>
+        public static string envKeyCommandSpecifier {
+            get {
+                return ResourceManager.GetString("envKeyCommandSpecifier", resourceCulture);
             }
         }
         
@@ -151,11 +198,60 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to System error {0} has occurred..
+        ///   Looks up a localized string similar to System error {0} has occurred.
+        ///
+        ///.
         /// </summary>
-        public static string netCommandError {
+        public static string netCommandErrorFormat {
             get {
-                return ResourceManager.GetString("netCommandError", resourceCulture);
+                return ResourceManager.GetString("netCommandErrorFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}
+        ///
+        ///.
+        /// </summary>
+        public static string netCommandStatusFormat {
+            get {
+                return ResourceManager.GetString("netCommandStatusFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SOFTWARE\Microsoft\Windows NT\CurrentVersion.
+        /// </summary>
+        public static string win10RegKeyUBR {
+            get {
+                return ResourceManager.GetString("win10RegKeyUBR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to UBR.
+        /// </summary>
+        public static string win10RegNameUBR {
+            get {
+                return ResourceManager.GetString("win10RegNameUBR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 0.
+        /// </summary>
+        public static string win10VersionDefaultUBR {
+            get {
+                return ResourceManager.GetString("win10VersionDefaultUBR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}.{1}.{2}.{3}.
+        /// </summary>
+        public static string win10VersionFormat {
+            get {
+                return ResourceManager.GetString("win10VersionFormat", resourceCulture);
             }
         }
     }

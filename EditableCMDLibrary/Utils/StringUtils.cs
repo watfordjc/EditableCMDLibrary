@@ -13,78 +13,172 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
     [SupportedOSPlatform("windows")]
     public static class StringUtils
     {
+        #region Special Folders
+
         /// <summary>
-        /// Get default cmd working directory
+        /// Get the path for <see cref="Environment.SpecialFolder.System"/> as a string.
         /// </summary>
-        /// <returns>User Profile folder if not admin, System32 if admin</returns>
-        public static string DefaultWorkingDirectory()
+        /// <remarks>On non-Windows, value is <see cref="string.Empty"/>.</remarks>
+        /// <returns>System directory - path for %SystemRoot%\System32.</returns>
+        public static string GetSystemDirectory()
         {
-            return WindowsIdentity.GetCurrent().Owner.IsWellKnown(WellKnownSidType.BuiltinAdministratorsSid) ? SystemDirectory() : ProfileDirectory();
+            return Environment.GetFolderPath(Environment.SpecialFolder.System);
         }
 
         /// <summary>
-        /// Get system directory
+        /// Get the path for <see cref="Environment.SpecialFolder.UserProfile"/> as a string.
         /// </summary>
-        /// <returns>Path for %SYSTEMROOT%\System32</returns>
-        public static string SystemDirectory()
-        {
-            return Environment.GetFolderPath(Environment.SpecialFolder.System); // System32
-        }
-
-        /// <summary>
-        /// Get cmd.exe path if available, else pretend
-        /// </summary>
-        /// <returns>Path for console</returns>
-        public static string ComSpec()
-        {
-            string path = Environment.GetEnvironmentVariable("COMSPEC");
-            return path ?? string.Concat(SystemDirectory(), Path.DirectorySeparatorChar, "cmd.exe");
-        }
-
-        /// <summary>
-        /// Get current user's profile directory
-        /// </summary>
-        /// <returns>Path for %USERPROFILE%</returns>
-        public static string ProfileDirectory()
+        /// <remarks>If the environment variable doesn't exist, value is <see cref="string.Empty"/>.</remarks>
+        /// <returns>User's profile directory - %UserProfile%, $HOME, $XDG_HOME.</returns>
+        public static string GetUserProfileDirectory()
         {
             return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         }
 
+        #endregion
+
+        #region Environment Variables
+
         /// <summary>
-        /// Get command prompt header
+        /// Get the value of environment variable %ComSpec%.
         /// </summary>
-        /// <returns>Clone of cmd.exe header</returns>
-        public static string PromptHeader()
+        /// <returns>Path for console.</returns>
+        public static string GetComSpec()
         {
-            return string.Format("Microsoft Windows [Version {0}]\n(c) Microsoft Corporation. All Rights Reserved.\n", WindowsVersion());
+            string path = Environment.GetEnvironmentVariable("COMSPEC");
+            return path ?? string.Concat(GetSystemDirectory(), Path.DirectorySeparatorChar, "cmd.exe");
+        }
+
+
+
+        #endregion
+
+        #region Registry Values
+
+        /// <summary>
+        /// Get a string value from the registry.
+        /// </summary>
+        /// <param name="subKey">The SubKey containing the value.</param>
+        /// <param name="name">The name of the registry value.</param>
+        /// <returns>The registry value, or null if it doesn't exist.</returns>
+        public static string GetRegistryValue(string subKey, string name)
+        {
+            using RegistryKey registryKey = Registry.LocalMachine.OpenSubKey(subKey);
+            return registryKey?.GetValue(name)?.ToString();
         }
 
         /// <summary>
-        /// Get Windows version
+        /// Get the Windows Update Build Revision (UBR).
         /// </summary>
-        /// <returns>Windows version string including UBR</returns>
-        public static string WindowsVersion()
+        /// <returns>True if <paramref name="ubr"/> contains the value of the registry key. False if <paramref name="ubr"/> contains the value of <see cref="strings.win10VersionDefaultUBR"/>.</returns>
+        public static bool TryGetWindowsVersionUBR(out string ubr)
         {
-            string version;
-            if (Environment.OSVersion.Version.Major >= 10)
+            ubr = GetRegistryValue(strings.win10RegKeyUBR, strings.win10RegNameUBR);
+            if (ubr != null)
             {
-                version = string.Format("{0}.{1}.{2}.", Environment.OSVersion.Version.Major, Environment.OSVersion.Version.Minor, Environment.OSVersion.Version.Build);
-                using RegistryKey registryKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
-                version += registryKey.GetValue("UBR").ToString();
+                return true;
             }
             else
             {
-                version = Environment.OSVersion.VersionString;
+                ubr = strings.win10VersionDefaultUBR;
+                return false;
             }
-            return version;
         }
+
+        #endregion
+
+        #region Paths
+
+        /// <summary>
+        /// Get Command Prompt default working directory.
+        /// </summary>
+        /// <returns><see cref="GetSystemDirectory"/> if admin, otherwise <see cref="GetUserProfileDirectory"/>.</returns>
+        public static string GetDefaultWorkingDirectory()
+        {
+            bool hasAdminRights = false;
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                hasAdminRights = WindowsIdentity.GetCurrent().Owner.IsWellKnown(WellKnownSidType.BuiltinAdministratorsSid);
+            }
+            return hasAdminRights
+                ? GetSystemDirectory()
+                : GetUserProfileDirectory();
+        }
+
+
+        #endregion
+
+        #region Versions and Copyrights
+
+        /// <summary>
+        /// Get the Command Prompt version.
+        /// </summary>
+        /// <returns>The Command Prompt version (same format as VER command).</returns>
+        public static string GetCommandPromptVersion()
+        {
+            return GetVersionHeader(strings.commandPromptWindowsOSName, GetWindowsVersion());
+        }
+
+        /// <summary>
+        /// Get a Command Prompt style version header.
+        /// </summary>
+        /// <param name="name">Name of the operating system or application (e.g. Microsoft Windows).</param>
+        /// <param name="version">Version of the operating system or application (e.g. 10.0.0.0).</param>
+        /// <returns>A version string formatted using Command Prompt VER format.</returns>
+        public static string GetVersionHeader(string name, string version)
+        {
+            return string.Format(strings.commandPromptVerFormat, name, version);
+        }
+
+        /// <summary>
+        /// Version and copyright string formatted using Command Prompt header format.
+        /// </summary>
+        /// <param name="name">Name of the operating system or application (e.g. <see cref="strings.commandPromptWindowsOSName"/>).</param>
+        /// <param name="version">Version of the operating system or application (e.g. <see cref="GetWindowsVersion"/>).</param>
+        /// <param name="copyright">Copyright notice of the operating system or application (e.g. <see cref="strings.commandPromptWindowsOSCopyright"/>).</param>
+        /// <returns></returns>
+        public static string GetVersionCopyrightHeader(string name, string version, string copyright)
+        {
+            return string.Format(strings.commandPromptHeaderFormat, GetVersionHeader(name, version), copyright);
+        }
+
+        /// <summary>
+        /// Get the header for the prompt.
+        /// </summary>
+        /// <returns>The Command Prompt header.</returns>
+        public static string GetPromptHeader()
+        {
+            return GetVersionCopyrightHeader(strings.commandPromptWindowsOSName, GetWindowsVersion(), strings.commandPromptWindowsOSCopyright);
+        }
+
+        /// <summary>
+        /// Get the Windows version as a string.
+        /// </summary>
+        /// <returns>Windows version (including Windows 10 UBR).</returns>
+        public static string GetWindowsVersion()
+        {
+            bool hasUBR = false;
+            string updateBuildVersion = null;
+            // Windows 10 (and later?) uses a different version string format.
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 10)
+            {
+                hasUBR = TryGetWindowsVersionUBR(out updateBuildVersion);
+            }
+            return !hasUBR
+                ? Environment.OSVersion.Version.ToString()
+                : string.Format(strings.win10VersionFormat, Environment.OSVersion.Version.Major, Environment.OSVersion.Version.Minor, Environment.OSVersion.Version.Build, updateBuildVersion);
+        }
+
+        #endregion
+
+        #region Error Messages
 
         /// <summary>
         /// Converts a <seealso href="https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes">Win32 System Error Code</seealso> into a a <see cref="Win32Exception"/> and extracts the value of the Message variable.
         /// </summary>
         /// <param name="errorCode">The Win32 error code.</param>
         /// <returns>The error Message string if available, or an empty string.</returns>
-        public static string GetErrorStringFromErrorCode(uint errorCode)
+        public static string GetErrorMessageFromErrorCode(uint errorCode)
         {
             return new Win32Exception((int)errorCode).Message;
         }
@@ -96,7 +190,12 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         /// <returns>The error Message string formatted in the same way as NET.exe output.</returns>
         public static string GetNetCommandStatusStringFromErrorCode(uint errorCode)
         {
-            return string.Format("{0}{1}\n\n", errorCode == 0 ? "" : string.Format(strings.netCommandError + "\n\n", errorCode), GetErrorStringFromErrorCode(errorCode));
+            string netCommandStatus = string.Format(strings.netCommandStatusFormat, GetErrorMessageFromErrorCode(errorCode));
+            return errorCode == 0
+                ? netCommandStatus
+                : string.Concat(string.Format(strings.netCommandErrorFormat, errorCode), netCommandStatus);
         }
+
+        #endregion
     }
 }

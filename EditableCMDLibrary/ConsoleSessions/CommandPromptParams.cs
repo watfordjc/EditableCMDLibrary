@@ -299,7 +299,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                                             }
                                         }
                                         NativeMethods.LocalFree(cmdParamPtr);
-                                        if (argv[0].ToLower() == StringUtils.ComSpec().ToLower())
+                                        if (argv[0].ToLower() == StringUtils.GetComSpec().ToLower())
                                         {
                                             fromAutoRun = true;
                                         }
