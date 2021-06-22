@@ -16,6 +16,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Win32.SystemEvents" Version="5.0.0" />
+    <PackageReference Include="System.Runtime.Caching" Version="5.0.0" />
     <PackageReference Include="System.Windows.Extensions" Version="5.0.0" />
   </ItemGroup>
 

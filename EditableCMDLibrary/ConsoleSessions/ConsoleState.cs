@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -265,6 +266,9 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             OutputEncoding = StartupParams.OutputEncoding;
             Console.InputEncoding = InputEncoding;
             Console.OutputEncoding = OutputEncoding;
+
+            // Force refresh of string values if environment variables change
+            SystemEvents.UserPreferenceChanged += StringUtils.SystemEvents_UserPreferenceChanged;
         }
 
         /// <summary>
@@ -512,6 +516,9 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// </summary>
         private void ExitCleanup()
         {
+            // Stop listening to static system events
+            SystemEvents.UserPreferenceChanged -= StringUtils.SystemEvents_UserPreferenceChanged;
+
             // End the console input read loop
             Closing = true;
 

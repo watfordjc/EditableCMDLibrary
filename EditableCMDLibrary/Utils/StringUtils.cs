@@ -2,6 +2,8 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Reflection;
+using System.Runtime.Caching;
 using System.Runtime.Versioning;
 using System.Security.Principal;
 
@@ -42,14 +44,83 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         /// <summary>
         /// Get the value of environment variable %ComSpec%.
         /// </summary>
-        /// <returns>Path for console.</returns>
-        public static string GetComSpec()
+        /// <param name="comspec">The default command interpreter's full path.</param>
+        /// <param name="forceCacheRefresh">Forces a refresh of the cache.</param>
+        /// <remarks>If the environment variable doesn't exist, <paramref name="comspec"/>'s value is <see cref="GetSystemDirectory"/>\<see cref="strings.commandPromptFilename"/>.</remarks>
+        /// <returns>True if <paramref name="comspec"/>'s value is that of the environment variable. False if it <see cref="GetSystemDirectory"/>\<see cref="strings.commandPromptFilename"/>.</returns>
+        public static bool TryGetComSpec(out string comspec, bool forceCacheRefresh = false)
         {
-            string path = Environment.GetEnvironmentVariable("COMSPEC");
-            return path ?? string.Concat(GetSystemDirectory(), Path.DirectorySeparatorChar, "cmd.exe");
+            // Guid used for cache entry name for bool storing existence of ComSpec environment variable.
+            const string comspecValueExistsGuid = "{879198DD-AA22-4246-9DE3-4C32FCEFCF5F}";
+            // Get the cached value of the ComSpec environment variable's existence. null is returned if nothing is cached.
+            bool? comspecValueExistsCached = MemoryCache.Default.Get(comspecValueExistsGuid) as bool?;
+            // Guid used for cache entry name for string storing ComSpec environment variable's value
+            const string comspecValueGuid = "{53B13996-B543-454C-BCFC-5CB6D08B4A51}";
+            // Get the cached value of the ComSpec environment variable. null is returned if nothing is cached.
+            comspec = MemoryCache.Default.Get(comspecValueGuid) as string;
+
+            // If the two cache entries exist, use their values:
+            if (!forceCacheRefresh && comspecValueExistsCached != null && comspec != null)
+            {
+                return comspecValueExistsCached == true;
+            }
+            // Otherwise, refresh the cache.
+            else
+            {
+                return updateCache(out comspec);
+            }
+
+            static bool updateCache(out string comspec)
+            {
+                // bool CacheItem for storing existence of environment variable
+                CacheItem comspecExists = new(comspecValueExistsGuid, true);
+                // string CacheItem for storing value of environment variable
+                CacheItem comspecValue = new(comspecValueGuid, Environment.GetEnvironmentVariable(strings.envKeyCommandSpecifier));
+                // If the environment variable doesn't exist:
+                if (comspecValue.Value == null)
+                {
+                    // Environment variable doesn't exist
+                    comspecExists.Value = false;
+                    // Use a default ComSpec value of cmd.exe in the System32 folder
+                    comspecValue.Value = string.Join(Path.DirectorySeparatorChar, GetSystemDirectory(), strings.commandPromptFilename);
+                }
+                // Cache for 3 hours
+                CacheItemPolicy policy = new() { SlidingExpiration = new TimeSpan(hours: 3, minutes: 0, seconds: 0) };
+
+                // Add the CacheItems to the cache, overwriting if they already exist
+                MemoryCache.Default.Set(comspecValue, policy);
+                MemoryCache.Default.Set(comspecExists, policy);
+
+                // Return the values now in the cache
+                comspec = comspecValue.Value as string;
+                return comspecExists.Value as bool? == true;
+            }
         }
 
+        /// <summary>
+        /// When system user preferences change, refresh cached values
+        /// </summary>
+        /// <param name="sender">Sender of the event.</param>
+        /// <param name="e">Event arguments.</param>
+        public static void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
+        {
+            // Preference changes in category General
+            if (e.Category == UserPreferenceCategory.General)
+            {
+                // Environment variables may have changed, force a refresh
+                _ = TryGetComSpec(out _, true);
+            }
+        }
 
+        /// <summary>
+        /// Get the value of environment variable %ComSpec%.
+        /// </summary>
+        /// <returns>The default command interpreter's full path, or <see cref="GetSystemDirectory"/>\<see cref="strings.commandPromptFilename"/>.</returns>
+        public static string GetComSpec()
+        {
+            _ = TryGetComSpec(out string comspec);
+            return comspec;
+        }
 
         #endregion
 
@@ -73,15 +144,50 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         /// <returns>True if <paramref name="ubr"/> contains the value of the registry key. False if <paramref name="ubr"/> contains the value of <see cref="strings.win10VersionDefaultUBR"/>.</returns>
         public static bool TryGetWindowsVersionUBR(out string ubr)
         {
-            ubr = GetRegistryValue(strings.win10RegKeyUBR, strings.win10RegNameUBR);
-            if (ubr != null)
+            // Guid used for cache entry name for bool storing existence of UBR registry key.
+            const string ubrValueExistsGuid = "{A322D33B-4CBA-48B0-9CFB-21827C73880A}";
+            // Get the cached value of the UBR registry key's existence. null is returned if nothing is cached.
+            bool? ubrValueExistsCached = MemoryCache.Default.Get(ubrValueExistsGuid) as bool?;
+            // Guid used for cache entry name for string storing UBR registry key's value
+            const string ubrValueGuid = "{841EF3D4-9D49-4AE8-8870-E22291EA16A8}";
+            // Get the cached value of the UBR registry key. null is returned if nothing is cached.
+            ubr = MemoryCache.Default.Get(ubrValueGuid) as string;
+
+            // If the two cache entries exist, use their values:
+            if (ubrValueExistsCached != null && ubr != null)
             {
-                return true;
+                return ubrValueExistsCached == true;
             }
+            // Otherwise, refresh the cache.
             else
             {
-                ubr = strings.win10VersionDefaultUBR;
-                return false;
+                return updateCache(out ubr);
+            }
+
+            static bool updateCache(out string ubr)
+            {
+                // bool CacheItem for storing existence of registry key
+                CacheItem ubrExists = new(ubrValueExistsGuid, true);
+                // string CacheItem for storing value of registry key
+                CacheItem ubrValue = new(ubrValueGuid, GetRegistryValue(strings.win10RegKeyUBR, strings.win10RegNameUBR));
+                // If the registry key doesn't exist:
+                if (ubrValue.Value == null)
+                {
+                    // Registry key doesn't exist
+                    ubrExists.Value = false;
+                    // Use a default UBR of 0
+                    ubrValue.Value = strings.win10VersionDefaultUBR;
+                }
+                // Updating Windows 10 to a new build requires a reboot - UBR won't change for life of a console session.
+                CacheItemPolicy policy = new() { Priority = CacheItemPriority.NotRemovable };
+
+                // Add the CacheItems to the cache, overwriting if they already exist
+                MemoryCache.Default.Set(ubrValue, policy);
+                MemoryCache.Default.Set(ubrExists, policy);
+
+                // Return the values now in the cache
+                ubr = ubrValue.Value as string;
+                return ubrExists.Value as bool? == true;
             }
         }
 
@@ -145,10 +251,17 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         /// <summary>
         /// Get the header for the prompt.
         /// </summary>
-        /// <returns>The Command Prompt header.</returns>
-        public static string GetPromptHeader()
+        /// <param name="prependHeader">True prepends the header with the application's name, version, and copyright.</param>
+        /// <returns>The Command Prompt header, prepended with the application's information if <paramref name="prependHeader"/> is <c>true</c>.</returns>
+        public static string GetPromptHeader(bool prependHeader)
         {
-            return GetVersionCopyrightHeader(strings.commandPromptWindowsOSName, GetWindowsVersion(), strings.commandPromptWindowsOSCopyright);
+            string operatingSystemVersionCopyright = GetVersionCopyrightHeader(strings.commandPromptWindowsOSName, GetWindowsVersion(), strings.commandPromptWindowsOSCopyright);
+            return prependHeader
+                ? string.Concat(
+                    GetVersionCopyrightHeader(Assembly.GetEntryAssembly().GetName().Name, Assembly.GetEntryAssembly().GetName().Version.ToString(), (Assembly.GetEntryAssembly().GetCustomAttribute(typeof(AssemblyCopyrightAttribute)) as AssemblyCopyrightAttribute).Copyright.Replace("\u00a9", "(c)")),
+                    operatingSystemVersionCopyright
+                    )
+                : operatingSystemVersionCopyright;
         }
 
         /// <summary>
