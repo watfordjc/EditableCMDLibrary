@@ -242,10 +242,16 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                 file: string.Concat(sessionGuid, ".env.txt"),
                 description: "session environment variables store");
             DateTime now = DateTime.UtcNow;
-            // Path "%LocalAppData%\EditableCMD\Logs\Year\Month\Logfile.txt"
-            InputLogger = new FileLogger(directory: string.Join(Path.DirectorySeparatorChar, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ApplicationName, "Logs", now.ToString("yyyy"), now.ToString("MM - MMMM yyyy")),
-                file: string.Concat(DateTime.Now.ToString(strings.logDateFormat), ".txt"),
-                description: "session log");
+            if (ApplicationName == "EditableCMD")
+            {
+                // Path "%LocalAppData%\EditableCMD\Logs\Year\Month\Logfile.txt"
+                InputLogger = new FileLogger(directory: string.Join(Path.DirectorySeparatorChar, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ApplicationName, "Logs", now.ToString("yyyy"), now.ToString("MM - MMMM yyyy")),
+                    file: string.Concat(DateTime.Now.ToString(strings.logDateFormat), ".txt"),
+                    description: "session log");
+            } else
+            {
+                InputLogger = null;
+            }
         }
 
         /// <summary>
@@ -521,14 +527,14 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             if (e.SpecialKey == ConsoleSpecialKey.ControlBreak)
             {
                 e.Cancel = false;
-                InputLogger.Log(FileLogger.FormatCancelledInputLogEntry(DateTime.UtcNow, CurrentDirectory, Input.Text.ToString(), e.SpecialKey));
+                InputLogger?.Log(FileLogger.FormatCancelledInputLogEntry(DateTime.UtcNow, CurrentDirectory, Input.Text.ToString(), e.SpecialKey));
                 ConsoleOutput.WriteLine("\n");
                 ConsoleOutput.WritePrompt(this, false);
             }
             else if (e.SpecialKey == ConsoleSpecialKey.ControlC)
             {
                 e.Cancel = true;
-                InputLogger.Log(FileLogger.FormatCancelledInputLogEntry(DateTime.UtcNow, CurrentDirectory, Input.Text.ToString(), e.SpecialKey));
+                InputLogger?.Log(FileLogger.FormatCancelledInputLogEntry(DateTime.UtcNow, CurrentDirectory, Input.Text.ToString(), e.SpecialKey));
                 // Add command to command history if Ctrl+C'd a child process, otherwise don't
                 if (CmdRunning)
                 {

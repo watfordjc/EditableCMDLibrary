@@ -260,7 +260,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
             string operatingSystemVersionCopyright = GetVersionCopyrightHeader(strings.commandPromptWindowsOSName, GetWindowsVersion(), strings.commandPromptWindowsOSCopyright);
             return prependHeader
                 ? string.Concat(
-                    GetVersionCopyrightHeader(Assembly.GetEntryAssembly().GetName().Name, Assembly.GetEntryAssembly().GetName().Version.ToString(), (Assembly.GetEntryAssembly().GetCustomAttribute(typeof(AssemblyCopyrightAttribute)) as AssemblyCopyrightAttribute).Copyright.Replace("\u00a9", "(c)")),
+                    GetVersionCopyrightHeader((Assembly.GetEntryAssembly().GetCustomAttribute(typeof(AssemblyProductAttribute)) as AssemblyProductAttribute).Product, Assembly.GetEntryAssembly().GetName().Version.ToString(), (Assembly.GetEntryAssembly().GetCustomAttribute(typeof(AssemblyCopyrightAttribute)) as AssemblyCopyrightAttribute).Copyright.Replace("\u00a9", "(c)")),
                     operatingSystemVersionCopyright
                     )
                 : operatingSystemVersionCopyright;
