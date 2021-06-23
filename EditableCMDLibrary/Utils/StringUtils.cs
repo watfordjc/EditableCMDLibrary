@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Caching;
+using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using System.Security.Principal;
 
@@ -102,6 +103,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         /// </summary>
         /// <param name="sender">Sender of the event.</param>
         /// <param name="e">Event arguments.</param>
+        [MethodImpl(MethodImplOptions.Synchronized)]
         public static void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
         {
             // Preference changes in category General

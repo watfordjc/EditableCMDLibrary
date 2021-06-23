@@ -7,6 +7,7 @@ using System.Media;
 using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using System.Text;
+using System.Threading;
 using uk.JohnCook.dotnet.EditableCMDLibrary.InputProcessing;
 using uk.JohnCook.dotnet.EditableCMDLibrary.Interop;
 using uk.JohnCook.dotnet.EditableCMDLibrary.Logging;
@@ -42,6 +43,10 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// An event that fires when this console session is closing from a call to <see cref="EndSession"/>.
         /// </summary>
         public event EventHandler<bool> SessionClosing;
+        /// <summary>
+        /// An event that fires when <see cref="SystemEvents.UserPreferenceChanged"/> fires.
+        /// </summary>
+        public event UserPreferenceChangedEventHandler UserPreferenceChanged;
 
         #endregion
 
@@ -267,8 +272,43 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             Console.InputEncoding = InputEncoding;
             Console.OutputEncoding = OutputEncoding;
 
-            // Force refresh of string values if environment variables change
-            SystemEvents.UserPreferenceChanged += StringUtils.SystemEvents_UserPreferenceChanged;
+            #region Static system event forwarding
+            /*
+             * "Because this is a static event, you must detach your event handlers
+             *  when your application is disposed, or memory leaks will result.
+             *  -- https://docs.microsoft.com/en-us/dotnet/api/microsoft.win32.systemevents.userpreferencechanged?view=net-5.0
+             *
+             *  Attach/detach our event handlers for static system events in this class only.
+             *  Have our event handlers forward such events as our own events.
+             */
+
+            SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
+            #endregion
+        }
+
+        /// <summary>
+        /// Forwards static system event for user preference changes.
+        /// </summary>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="e">The event arguments.</param>
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        private void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
+        {
+            /*
+             * "Do not perform time-consuming processing on the thread that raises a system event handler
+             *  because it might prevent other applications from functioning."
+             *  -- https://docs.microsoft.com/en-us/dotnet/api/microsoft.win32.systemevents?view=net-5.0
+             *
+             *  Forward system events in a separate thread.
+             */
+            Thread thread = new(() =>
+            {
+                // Forward event to static event handlers
+                StringUtils.SystemEvents_UserPreferenceChanged(sender, e);
+                // Forward event to instance event handlers that are subscribed
+                UserPreferenceChanged?.Invoke(sender, e);
+            });
+            thread.Start();
         }
 
         /// <summary>
@@ -517,7 +557,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         private void ExitCleanup()
         {
             // Stop listening to static system events
-            SystemEvents.UserPreferenceChanged -= StringUtils.SystemEvents_UserPreferenceChanged;
+            SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
 
             // End the console input read loop
             Closing = true;
