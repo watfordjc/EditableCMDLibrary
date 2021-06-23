@@ -191,6 +191,10 @@
 </value>
     <comment>NET.exe status string format</comment>
   </data>
+  <data name="unsanitisedAppName" xml:space="preserve">
+    <value>EditableCMD</value>
+    <comment>Application name for EditableCMD</comment>
+  </data>
   <data name="win10RegKeyUBR" xml:space="preserve">
     <value>SOFTWARE\Microsoft\Windows NT\CurrentVersion</value>
     <comment>Registry sub-key for updateBuildRevision</comment>

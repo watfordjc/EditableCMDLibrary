@@ -220,6 +220,15 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to EditableCMD.
+        /// </summary>
+        public static string unsanitisedAppName {
+            get {
+                return ResourceManager.GetString("unsanitisedAppName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to SOFTWARE\Microsoft\Windows NT\CurrentVersion.
         /// </summary>
         public static string win10RegKeyUBR {

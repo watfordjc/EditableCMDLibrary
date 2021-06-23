@@ -242,7 +242,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                 file: string.Concat(sessionGuid, ".env.txt"),
                 description: "session environment variables store");
             DateTime now = DateTime.UtcNow;
-            if (ApplicationName == "EditableCMD")
+            if (ApplicationName == strings.unsanitisedAppName)
             {
                 // Path "%LocalAppData%\EditableCMD\Logs\Year\Month\Logfile.txt"
                 InputLogger = new FileLogger(directory: string.Join(Path.DirectorySeparatorChar, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ApplicationName, "Logs", now.ToString("yyyy"), now.ToString("MM - MMMM yyyy")),
@@ -269,7 +269,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
 
             // Emulate cmd.exe window title
             NativeMethods.GetStartupInfo(out NativeMethods.STARTUPINFO startupInfo);
-            title = startupInfo.lpTitle.EndsWith(strings.commandPromptFilename) ? Console.Title = StringUtils.GetComSpec() : strings.commandPromptWindowTitle;
+            title = ApplicationName != strings.unsanitisedAppName ? ApplicationName : startupInfo.lpTitle.EndsWith(strings.commandPromptFilename) ? StringUtils.GetComSpec() : strings.commandPromptWindowTitle;
             Console.Title = title;
 
             // Set input and output encoding
