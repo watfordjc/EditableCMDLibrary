@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Media;
 using System.Runtime.CompilerServices;
@@ -26,27 +27,27 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <summary>
         /// An event that fires when <see cref="ConsoleInputLine.StartPosition"/> changes.
         /// </summary>
-        public event EventHandler<NativeMethods.COORD> InputStartPositionChanged;
+        public event EventHandler<NativeMethods.COORD>? InputStartPositionChanged;
         /// <summary>
         /// An event that fires when <see cref="ConsoleInputLine.EndPosition"/> changes.
         /// </summary>
-        public event EventHandler<NativeMethods.COORD> InputEndPositionChanged;
+        public event EventHandler<NativeMethods.COORD>? InputEndPositionChanged;
         /// <summary>
         /// An event that fires when <see cref="ConsoleInputLine.Text"/> changes.
         /// </summary>
-        public event EventHandler<ConsoleInputLine> InputChanged;
+        public event EventHandler<ConsoleInputLine>? InputChanged;
         /// <summary>
         /// An event that fires when <see cref="CurrentDirectory"/> changes.
         /// </summary>
-        public event EventHandler<string> CurrentDirectoryChanged;
+        public event EventHandler<string>? CurrentDirectoryChanged;
         /// <summary>
         /// An event that fires when this console session is closing from a call to <see cref="EndSession"/>.
         /// </summary>
-        public event EventHandler<bool> SessionClosing;
+        public event EventHandler<bool>? SessionClosing;
         /// <summary>
         /// An event that fires when <see cref="SystemEvents.UserPreferenceChanged"/> fires.
         /// </summary>
-        public event UserPreferenceChangedEventHandler UserPreferenceChanged;
+        public event EventHandler<UserPreferenceChangedEventArgs>? UserPreferenceChanged;
 
         #endregion
 
@@ -128,7 +129,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <summary>
         /// Input log file
         /// </summary>
-        public FileLogger InputLogger { get; private set; }
+        public IInputLogger InputLogger { get; private set; }
 
         // Window title
         private string title;
@@ -173,11 +174,11 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <summary>
         /// A cmd.exe <see cref="Process"/>.
         /// </summary>
-        public Process CmdProcess;
+        public Process? CmdProcess;
         /// <summary>
         /// The <see cref="ProcessStartInfo"/> for <see cref="CmdProcess"/>,
         /// </summary>
-        public ProcessStartInfo CmdProcessStartInfo = null;
+        public ProcessStartInfo CmdProcessStartInfo;
         /// <summary>
         /// A boolean value indicating if <see cref="CmdProcess"/> is currently running.
         /// </summary>
@@ -214,7 +215,6 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             sessionGuid = guid == Guid.Empty ? strings.debugSessionGuid : guid.ToString("B");
             InitFileLogging();
             DrivePaths = new();
-            ChangeCurrentDirectory(StringUtils.GetDefaultWorkingDirectory());
             EchoEnabled = true;
             Input = new();
             autoComplete = new(this);
@@ -222,6 +222,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             {
                 FileName = StringUtils.GetComSpec()
             };
+            ChangeCurrentDirectory(StringUtils.GetDefaultWorkingDirectory());
             CmdProcess = new()
             {
                 StartInfo = CmdProcessStartInfo
@@ -231,6 +232,9 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <summary>
         /// Initialise the files used for storing state and logging input.
         /// </summary>
+        [MemberNotNull(nameof(PathLogger))]
+        [MemberNotNull(nameof(EnvLogger))]
+        [MemberNotNull(nameof(InputLogger))]
         private void InitFileLogging()
         {
             // Path "%Temp%\EditableCMD\guid.txt"
@@ -248,15 +252,18 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                 InputLogger = new FileLogger(directory: string.Join(Path.DirectorySeparatorChar, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ApplicationName, "Logs", now.ToString("yyyy"), now.ToString("MM - MMMM yyyy")),
                     file: string.Concat(DateTime.Now.ToString(strings.logDateFormat), ".txt"),
                     description: "session log");
-            } else
+            }
+            else
             {
-                InputLogger = null;
+                InputLogger = new NullLogger(description: "session log");
             }
         }
 
         /// <summary>
         /// Initialise the console
         /// </summary>
+        [MemberNotNull(nameof(InputEncoding))]
+        [MemberNotNull(nameof(OutputEncoding))]
         private void InitConsole()
         {
             // Add console control event handler - handles Ctrl+C/Ctrl+Break and runs ExitCleanup() on exit
@@ -298,7 +305,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <param name="sender">The sender of the event.</param>
         /// <param name="e">The event arguments.</param>
         [MethodImpl(MethodImplOptions.Synchronized)]
-        private void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
+        private void OnUserPreferenceChanged(object? sender, UserPreferenceChangedEventArgs e)
         {
             /*
              * "Do not perform time-consuming processing on the thread that raises a system event handler
@@ -424,6 +431,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// Change the current directory to <paramref name="s"/>.
         /// </summary>
         /// <param name="s">The directory to change to.</param>
+        [MemberNotNull(nameof(CurrentDirectory))]
         public void ChangeCurrentDirectory(string s)
         {
             CurrentDirectory = s;
@@ -522,19 +530,19 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <param name="sender">sender</param>
         /// <param name="e">arguments</param>
         [MethodImpl(MethodImplOptions.Synchronized)]
-        protected void ConsoleCancelEventHandler(object sender, ConsoleCancelEventArgs e)
+        protected void ConsoleCancelEventHandler(object? sender, ConsoleCancelEventArgs e)
         {
             if (e.SpecialKey == ConsoleSpecialKey.ControlBreak)
             {
                 e.Cancel = false;
-                InputLogger?.Log(FileLogger.FormatCancelledInputLogEntry(DateTime.UtcNow, CurrentDirectory, Input.Text.ToString(), e.SpecialKey));
+                InputLogger.Log(StringUtils.FormatCancelledInputLogEntry(DateTime.UtcNow, CurrentDirectory, Input.Text.ToString(), e.SpecialKey));
                 ConsoleOutput.WriteLine("\n");
                 ConsoleOutput.WritePrompt(this, false);
             }
             else if (e.SpecialKey == ConsoleSpecialKey.ControlC)
             {
                 e.Cancel = true;
-                InputLogger?.Log(FileLogger.FormatCancelledInputLogEntry(DateTime.UtcNow, CurrentDirectory, Input.Text.ToString(), e.SpecialKey));
+                InputLogger.Log(StringUtils.FormatCancelledInputLogEntry(DateTime.UtcNow, CurrentDirectory, Input.Text.ToString(), e.SpecialKey));
                 // Add command to command history if Ctrl+C'd a child process, otherwise don't
                 if (CmdRunning)
                 {
@@ -572,6 +580,11 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             PathLogger.DeleteFile();
             // Delete the file storing the environment
             EnvLogger.DeleteFile();
+            // Dispose the input logger
+            if (InputLogger is IDisposable)
+            {
+                (InputLogger as IDisposable)?.Dispose();
+            }
             // Restore original console modes for standard handles
             if (StandardInput.CanSetMode)
             {

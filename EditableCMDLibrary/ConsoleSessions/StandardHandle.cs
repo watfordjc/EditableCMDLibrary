@@ -28,11 +28,11 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <summary>
         /// An event fired when a standard stream's mode change has succeeded.
         /// </summary>
-        public event EventHandler<uint> ModeChanged;
+        public event EventHandler<uint>? ModeChanged;
         /// <summary>
         /// An event fired when a standard stream's mode change has failed.
         /// </summary>
-        public event EventHandler<uint> ModeSetFailed;
+        public event EventHandler<uint>? ModeSetFailed;
 
         /// <summary>
         /// Wrapper for a standard stream.

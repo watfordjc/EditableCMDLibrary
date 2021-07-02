@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
-using System.Text;
 using System.Threading;
 using uk.JohnCook.dotnet.EditableCMDLibrary.Interop;
 using uk.JohnCook.dotnet.EditableCMDLibrary.Utils;
@@ -20,20 +18,20 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <summary>
         /// An event fired whenever there is a new line of output if <see cref="StoreOutput"/> is true.
         /// </summary>
-        public event EventHandler<int> NewOutput;
+        public event EventHandler<int>? NewOutput;
         /// <summary>
         /// An event fired just after the process has started.
         /// </summary>
-        public event EventHandler<bool> Started;
+        public event EventHandler<bool>? Started;
         /// <summary>
         /// An event fired just after the process has finished executing.
         /// </summary>
-        public event EventHandler<bool> Completed;
+        public event EventHandler<bool>? Completed;
 
-        private ManualResetEventSlim eventSlim = new(false);
+        private readonly ManualResetEventSlim eventSlim = new(false);
 
-        private readonly ConsoleState state = null;
-        private Thread cmdThread;
+        private readonly ConsoleState state;
+        private Thread? cmdThread;
 
         /// <summary>
         /// The command string to execute.
@@ -58,7 +56,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <summary>
         /// A queue containing the output from the executable if <see cref="StoreOutput"/> is true.
         /// </summary>
-        public Queue<string> Output { get; private set; }
+        public Queue<string>? Output { get; private set; }
         /// <summary>
         /// The exit code from the executable.
         /// </summary>
@@ -81,7 +79,6 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <param name="updateEnvironment">Whether the environment variables set at the end of execution should be persisted. Stored in <see cref="UpdateEnvironment"/>.</param>
         /// <param name="storeOutput">Whether the output should be stored in a <see cref="Queue{T}"/> for further parsing. Stored in <see cref="StoreOutput"/>.</param>
         /// <param name="displayOutput">Whether the output should be printed to console output. Stored in <see cref="DisplayOutput"/>.</param>
-#nullable enable
         public CommandPrompt(ConsoleState state, string? command, bool updateCurrentDirectory = true, bool updateEnvironment = true, bool storeOutput = false, bool displayOutput = true)
         {
             this.state = state;
@@ -105,7 +102,6 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             cancellationTokenSource = new();
             ProcessCommand();
         }
-#nullable restore
 
         /// <summary>
         /// Sets up the <see cref="cmdThread"/> <see cref="Process"/>.
@@ -188,14 +184,30 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             eventSlim.Reset();
         }
 
+        private void ProcessStartFailed()
+        {
+            Debug.Fail("Unable to start process - Process.Start returned null.");
+            state.InputLogger.Log("Unable to start process - Process.Start returned null.");
+            Started?.Invoke(this, false);
+            state.CmdProcess = new() { StartInfo = state.CmdProcessStartInfo };
+            Finished = false;
+            state.CmdRunning = false;
+            Completed?.Invoke(this, true);
+        }
+
         /// <summary>
         /// Create a <see cref="CommandPrompt"/> <see cref="Process"/> that will store output in a queue.
         /// </summary>
         private void ProcessStoreOutput()
         {
             state.CmdProcess = Process.Start(processStartInfo);
+            if (state.CmdProcess == null)
+            {
+                ProcessStartFailed();
+                return;
+            }
             Started?.Invoke(this, true);
-            string currentLine = string.Empty;
+            string? currentLine = string.Empty;
             while (!aborted && !state.CmdProcess.StandardOutput.EndOfStream)
             {
                 currentLine = state.CmdProcess.StandardOutput.ReadLine();
@@ -203,7 +215,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                 {
                     continue;
                 }
-                Output.Enqueue(currentLine);
+                Output?.Enqueue(currentLine);
                 NewOutput?.Invoke(this, 1);
                 if (DisplayOutput)
                 {
@@ -229,6 +241,11 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         private void ProcessNoStoreOutput()
         {
             state.CmdProcess = Process.Start(processStartInfo);
+            if (state.CmdProcess == null)
+            {
+                ProcessStartFailed();
+                return;
+            }
             Started?.Invoke(this, true);
             state.CmdProcess.WaitForExit();
             if (!aborted)
@@ -249,7 +266,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// </summary>
         /// <param name="sender">The sender of the event.</param>
         /// <param name="done">A boolean indicating the process has finished executing.</param>
-        private void OnComplete(object sender, bool done)
+        private void OnComplete(object? sender, bool done)
         {
             if (!done)
             {
@@ -263,7 +280,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                 if (envFileAccessible)
                 {
                     using StreamReader envFile = new(state.EnvLogger.LogFile);
-                    string lineContent;
+                    string? lineContent;
                     while ((lineContent = envFile.ReadLine()) != null)
                     {
                         string[] variable = lineContent.Split('=', 2);
@@ -282,11 +299,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// </summary>
         public void Dispose()
         {
-            if (eventSlim != null)
-            {
-                eventSlim.Dispose();
-                eventSlim = null;
-            }
+            eventSlim.Dispose();
             GC.SuppressFinalize(this);
         }
     }

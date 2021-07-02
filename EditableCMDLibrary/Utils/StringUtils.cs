@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Caching;
@@ -49,7 +50,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         /// <param name="forceCacheRefresh">Forces a refresh of the cache.</param>
         /// <remarks>If the environment variable doesn't exist, <paramref name="comspec"/>'s value is <see cref="GetSystemDirectory"/>\<see cref="strings.commandPromptFilename"/>.</remarks>
         /// <returns>True if <paramref name="comspec"/>'s value is that of the environment variable. False if it <see cref="GetSystemDirectory"/>\<see cref="strings.commandPromptFilename"/>.</returns>
-        public static bool TryGetComSpec(out string comspec, bool forceCacheRefresh = false)
+        public static bool TryGetComSpec([NotNull] out string? comspec, bool forceCacheRefresh = false)
         {
             // Guid used for cache entry name for bool storing existence of ComSpec environment variable.
             const string comspecValueExistsGuid = "{879198DD-AA22-4246-9DE3-4C32FCEFCF5F}";
@@ -71,7 +72,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
                 return updateCache(out comspec);
             }
 
-            static bool updateCache(out string comspec)
+            static bool updateCache([NotNull] out string? comspec)
             {
                 // bool CacheItem for storing existence of environment variable
                 CacheItem comspecExists = new(comspecValueExistsGuid, true);
@@ -104,7 +105,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         /// <param name="sender">Sender of the event.</param>
         /// <param name="e">Event arguments.</param>
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public static void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
+        public static void SystemEvents_UserPreferenceChanged(object? sender, UserPreferenceChangedEventArgs e)
         {
             // Preference changes in category General
             if (e.Category == UserPreferenceCategory.General)
@@ -134,9 +135,9 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         /// <param name="subKey">The SubKey containing the value.</param>
         /// <param name="name">The name of the registry value.</param>
         /// <returns>The registry value, or null if it doesn't exist.</returns>
-        public static string GetRegistryValue(string subKey, string name)
+        public static string? GetRegistryValue(string subKey, string name)
         {
-            using RegistryKey registryKey = Registry.LocalMachine.OpenSubKey(subKey);
+            using RegistryKey? registryKey = Registry.LocalMachine.OpenSubKey(subKey);
             return registryKey?.GetValue(name)?.ToString();
         }
 
@@ -144,7 +145,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         /// Get the Windows Update Build Revision (UBR).
         /// </summary>
         /// <returns>True if <paramref name="ubr"/> contains the value of the registry key. False if <paramref name="ubr"/> contains the value of <see cref="strings.win10VersionDefaultUBR"/>.</returns>
-        public static bool TryGetWindowsVersionUBR(out string ubr)
+        public static bool TryGetWindowsVersionUBR([NotNull] out string? ubr)
         {
             // Guid used for cache entry name for bool storing existence of UBR registry key.
             const string ubrValueExistsGuid = "{A322D33B-4CBA-48B0-9CFB-21827C73880A}";
@@ -166,7 +167,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
                 return updateCache(out ubr);
             }
 
-            static bool updateCache(out string ubr)
+            static bool updateCache([NotNull] out string? ubr)
             {
                 // bool CacheItem for storing existence of registry key
                 CacheItem ubrExists = new(ubrValueExistsGuid, true);
@@ -203,12 +204,12 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         /// <returns><see cref="GetSystemDirectory"/> if admin, otherwise <see cref="GetUserProfileDirectory"/>.</returns>
         public static string GetDefaultWorkingDirectory()
         {
-            bool hasAdminRights = false;
+            bool? hasAdminRights = false;
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
-                hasAdminRights = WindowsIdentity.GetCurrent().Owner.IsWellKnown(WellKnownSidType.BuiltinAdministratorsSid);
+                hasAdminRights = WindowsIdentity.GetCurrent().Owner?.IsWellKnown(WellKnownSidType.BuiltinAdministratorsSid);
             }
-            return hasAdminRights
+            return hasAdminRights == true
                 ? GetSystemDirectory()
                 : GetUserProfileDirectory();
         }
@@ -245,9 +246,11 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         /// <param name="version">Version of the operating system or application (e.g. <see cref="GetWindowsVersion"/>).</param>
         /// <param name="copyright">Copyright notice of the operating system or application (e.g. <see cref="strings.commandPromptWindowsOSCopyright"/>).</param>
         /// <returns></returns>
-        public static string GetVersionCopyrightHeader(string name, string version, string copyright)
+        public static string GetVersionCopyrightHeader(string name, string version, string? copyright)
         {
-            return string.Format(strings.commandPromptHeaderFormat, GetVersionHeader(name, version), copyright);
+            return copyright != null
+                ? string.Format(strings.commandPromptHeaderFormat, GetVersionHeader(name, version), copyright)
+                : string.Format(strings.commandPromptHeaderFormatNoCopyright, GetVersionHeader(name, version));
         }
 
         /// <summary>
@@ -258,12 +261,19 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         public static string GetPromptHeader(bool prependHeader)
         {
             string operatingSystemVersionCopyright = GetVersionCopyrightHeader(strings.commandPromptWindowsOSName, GetWindowsVersion(), strings.commandPromptWindowsOSCopyright);
-            return prependHeader
-                ? string.Concat(
-                    GetVersionCopyrightHeader((Assembly.GetEntryAssembly().GetCustomAttribute(typeof(AssemblyProductAttribute)) as AssemblyProductAttribute).Product, Assembly.GetEntryAssembly().GetName().Version.ToString(), (Assembly.GetEntryAssembly().GetCustomAttribute(typeof(AssemblyCopyrightAttribute)) as AssemblyCopyrightAttribute).Copyright.Replace("\u00a9", "(c)")),
-                    operatingSystemVersionCopyright
-                    )
-                : operatingSystemVersionCopyright;
+            if (!prependHeader)
+            {
+                return operatingSystemVersionCopyright;
+            }
+            else
+            {
+                string? product = (Assembly.GetEntryAssembly()?.GetCustomAttribute(typeof(AssemblyProductAttribute)) as AssemblyProductAttribute)?.Product;
+                product ??= "Unknown";
+                string? productVersion = Assembly.GetEntryAssembly()?.GetName()?.Version?.ToString();
+                productVersion ??= "?.?.?.?";
+                string? productCopyright = (Assembly.GetEntryAssembly()?.GetCustomAttribute(typeof(AssemblyCopyrightAttribute)) as AssemblyCopyrightAttribute)?.Copyright.Replace("\u00a9", "(c)");
+                return string.Concat(GetVersionCopyrightHeader(product, productVersion, productCopyright), operatingSystemVersionCopyright);
+            }
         }
 
         /// <summary>
@@ -273,7 +283,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         public static string GetWindowsVersion()
         {
             bool hasUBR = false;
-            string updateBuildVersion = null;
+            string? updateBuildVersion = null;
             // Windows 10 (and later?) uses a different version string format.
             if (Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 10)
             {
@@ -284,6 +294,49 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
                 : string.Format(strings.win10VersionFormat, Environment.OSVersion.Version.Major, Environment.OSVersion.Version.Minor, Environment.OSVersion.Version.Build, updateBuildVersion);
         }
 
+        #endregion
+
+        #region Logging
+        /// <summary>
+        /// Creates a formmated string for an input entry.
+        /// </summary>
+        /// <param name="timestamp">The timestamp of the input.</param>
+        /// <param name="path">The directory path of the input (the string that will appear after the timestamp and before the input).</param>
+        /// <param name="input">The input command or text.</param>
+        /// <param name="endInputKey">The key pressed to complete the entry, such as <see cref="ConsoleKey.Enter"/>.</param>
+        /// <returns>The formatted string.</returns>
+        public static string FormatInputLogEntry(DateTime timestamp, string path, string input, ConsoleKey endInputKey)
+        {
+            string finalKey = endInputKey == ConsoleKey.Enter ? strings.logEnter : string.Format("{0}", endInputKey.ToString());
+            return string.Concat(strings.logPrecedingCharacter, timestamp.ToString(strings.logDateFormat), strings.logDateTimezoneZulu, strings.logProceedingCharacter,
+                            path, ">", input,
+                            strings.logPrecedingCharacter, finalKey, strings.logProceedingCharacter);
+        }
+
+        /// <summary>
+        /// Creates a formatted string for a cancelled input entry.
+        /// </summary>
+        /// <param name="timestamp">The timestamp of the input.</param>
+        /// <param name="path">The directory path of the input (the string that will appear after the timestamp and before the input).</param>
+        /// <param name="input">The input command or text.</param>
+        /// <param name="endInputKey">The key pressed to complete the cancelled entry, such as <see cref="ConsoleSpecialKey.ControlC"/>.</param>
+        /// <returns>The formatted string.</returns>
+        public static string FormatCancelledInputLogEntry(DateTime timestamp, string path, string input, ConsoleSpecialKey endInputKey)
+        {
+            string finalKey = string.Empty;
+            switch (endInputKey)
+            {
+                case ConsoleSpecialKey.ControlBreak:
+                    finalKey = strings.logCtrlBreak;
+                    break;
+                case ConsoleSpecialKey.ControlC:
+                    finalKey = strings.logCtrlC;
+                    break;
+            }
+            return string.Concat(strings.logPrecedingCharacter, timestamp.ToString(strings.logDateFormat), strings.logDateTimezoneZulu, strings.logProceedingCharacter,
+                            path, ">", input,
+                            strings.logPrecedingCharacter, finalKey, strings.logProceedingCharacter);
+        }
         #endregion
 
         #region Error Messages

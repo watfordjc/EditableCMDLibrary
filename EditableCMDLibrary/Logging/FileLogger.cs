@@ -8,7 +8,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Logging
     /// <summary>
     /// A class for writing log-like data to text files
     /// </summary>
-    public class FileLogger
+    public class FileLogger : IInputLogger
     {
         /// <summary>
         /// The directory to save the log-like file.
@@ -22,6 +22,10 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Logging
         /// The description of the file/log used for printing errors during debugging.
         /// </summary>
         public string LogDescription { get; set; }
+        /// <summary>
+        /// Whether the log can be written to.
+        /// </summary>
+        public bool IsWriteable { get; private set; }
 
         /// <summary>
         /// An instance of a text file writer for log-like files.
@@ -44,6 +48,10 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Logging
         /// <returns>True on success.</returns>
         public bool Log(string s, bool append = true)
         {
+            if (LogDirectory is null || LogFile is null)
+            {
+                return false;
+            }
             if (!Directory.Exists(LogDirectory))
             {
                 try
@@ -66,9 +74,11 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Logging
                 {
                     File.WriteAllText(LogFile, string.Concat(s, Environment.NewLine), Encoding.UTF8);
                 }
+                IsWriteable = true;
             }
             catch (Exception e)
             {
+                IsWriteable = false;
                 Trace.WriteLine(string.Format("Unable to write to {0} - {1}", LogDescription, e.Message));
                 return false;
             }
@@ -92,55 +102,19 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Logging
         /// </summary>
         public void DeleteFile()
         {
+            if (LogDirectory is null && LogFile is null)
+            {
+                return;
+            }
             if (File.Exists(LogFile) &&
                 !Directory.Exists(LogFile) &&
                 !LogFile.Equals(Path.GetTempPath()) &&
                 !LogFile.Equals(Environment.GetFolderPath(Environment.SpecialFolder.Windows)) &&
                 !LogFile.Equals(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.Windows).ToString())))
             {
+                IsWriteable = false;
                 File.Delete(LogFile);
             }
-        }
-
-        /// <summary>
-        /// Creates a formmated string for an input entry.
-        /// </summary>
-        /// <param name="timestamp">The timestamp of the input.</param>
-        /// <param name="path">The directory path of the input (the string that will appear after the timestamp and before the input).</param>
-        /// <param name="input">The input command or text.</param>
-        /// <param name="endInputKey">The key pressed to complete the entry, such as <see cref="ConsoleKey.Enter"/>.</param>
-        /// <returns>The formatted string.</returns>
-        public static string FormatInputLogEntry(DateTime timestamp, string path, string input, ConsoleKey endInputKey)
-        {
-            string finalKey = endInputKey == ConsoleKey.Enter ? strings.logEnter : string.Format("{0}", endInputKey.ToString());
-            return string.Concat(strings.logPrecedingCharacter, timestamp.ToString(strings.logDateFormat), strings.logDateTimezoneZulu, strings.logProceedingCharacter,
-                            path, ">", input,
-                            strings.logPrecedingCharacter, finalKey, strings.logProceedingCharacter);
-        }
-
-        /// <summary>
-        /// Creates a formatted string for a cancelled input entry.
-        /// </summary>
-        /// <param name="timestamp">The timestamp of the input.</param>
-        /// <param name="path">The directory path of the input (the string that will appear after the timestamp and before the input).</param>
-        /// <param name="input">The input command or text.</param>
-        /// <param name="endInputKey">The key pressed to complete the cancelled entry, such as <see cref="ConsoleSpecialKey.ControlC"/>.</param>
-        /// <returns>The formatted string.</returns>
-        public static string FormatCancelledInputLogEntry(DateTime timestamp, string path, string input, ConsoleSpecialKey endInputKey)
-        {
-            string finalKey = string.Empty;
-            switch (endInputKey)
-            {
-                case ConsoleSpecialKey.ControlBreak:
-                    finalKey = strings.logCtrlBreak;
-                    break;
-                case ConsoleSpecialKey.ControlC:
-                    finalKey = strings.logCtrlC;
-                    break;
-            }
-            return string.Concat(strings.logPrecedingCharacter, timestamp.ToString(strings.logDateFormat), strings.logDateTimezoneZulu, strings.logProceedingCharacter,
-                            path, ">", input,
-                            strings.logPrecedingCharacter, finalKey, strings.logProceedingCharacter);
         }
     }
 }

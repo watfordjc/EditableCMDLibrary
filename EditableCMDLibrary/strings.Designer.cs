@@ -81,6 +81,16 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0}
+        ///.
+        /// </summary>
+        public static string commandPromptHeaderFormatNoCopyright {
+            get {
+                return ResourceManager.GetString("commandPromptHeaderFormatNoCopyright", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0} [Version {1}].
         /// </summary>
         public static string commandPromptVerFormat {

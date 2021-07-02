@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using uk.JohnCook.dotnet.EditableCMDLibrary.Interop;
+﻿using uk.JohnCook.dotnet.EditableCMDLibrary.Interop;
 using static uk.JohnCook.dotnet.EditableCMDLibrary.Interop.NativeMethods;
 
 namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions

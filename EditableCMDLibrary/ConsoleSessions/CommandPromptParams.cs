@@ -34,7 +34,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         private readonly string runExecutable = string.Empty;
         private readonly string runCommand = string.Empty;
         private readonly string runDirectory = string.Empty;
-        private readonly CommandPromptParams runCommandCliParams = null;
+        private readonly CommandPromptParams? runCommandCliParams = null;
         private readonly bool fromAutoRun = false;
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                 keep = false;
                 headerOff = true;
             }
-            string[] switchArgs = null;
+            string[]? switchArgs = null;
             // Find first non-switch parameter
             int firstNonSwitchParameter = Array.FindIndex(args, IsNotSwitch);
             if (firstNonSwitchParameter >= 0)
@@ -267,7 +267,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                                     continue;
                                 case '2':
                                     runCommand = switchArgs[argn][5..^1].Trim();
-                                    string[] argv = null;
+                                    string[]? argv = null;
                                     IntPtr cmdParamPtr = NativeMethods.CommandLineToArgvW(runCommand, out int argc);
                                     if (cmdParamPtr != IntPtr.Zero)
                                     {
@@ -277,7 +277,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                                             IntPtr thisParamPtr = Marshal.ReadIntPtr(cmdParamPtr, IntPtr.Size * argn2);
                                             if (thisParamPtr != IntPtr.Zero)
                                             {
-                                                argv[argn2] = Marshal.PtrToStringUni(thisParamPtr);
+                                                argv[argn2] = Marshal.PtrToStringUni(thisParamPtr) ?? string.Empty;
                                                 switch (argv[argn2].ToLower())
                                                 {
                                                     case "/k":
@@ -638,7 +638,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <summary>
         /// The value of <see cref="RunCommand"/> parsed as <see cref="CommandPromptParams"/>.
         /// </summary>
-        public CommandPromptParams RunCommandCliParams
+        public CommandPromptParams? RunCommandCliParams
         {
             get { return runCommandCliParams; }
         }

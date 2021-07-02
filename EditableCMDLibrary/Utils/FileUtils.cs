@@ -18,7 +18,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         {
             bool cancel = false;
             bool done = false;
-            FileStream fs = null;
+            FileStream? fs = null;
             System.Timers.Timer timer = new();
             if (timeout > 0)
             {

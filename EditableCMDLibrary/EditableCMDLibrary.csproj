@@ -12,6 +12,7 @@
     <Copyright>© John Cook.</Copyright>
     <PackageReleaseNotes>The API is pre-1.0 so is subject to breaking changes.</PackageReleaseNotes>
     <NeutralLanguage>en-GB</NeutralLanguage>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

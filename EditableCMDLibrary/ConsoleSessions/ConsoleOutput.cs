@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -58,7 +56,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             }
             if (state.EchoEnabled)
             {
-                string newCurrentDirectory = File.ReadLines(state.PathLogger.LogFile).FirstOrDefault();
+                string? newCurrentDirectory = File.ReadLines(state.PathLogger.LogFile).FirstOrDefault();
                 if (newCurrentDirectory != default)
                 {
                     char newDriveLetter = newCurrentDirectory.ToLower()[0];

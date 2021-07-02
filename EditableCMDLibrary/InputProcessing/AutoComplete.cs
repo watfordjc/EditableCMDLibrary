@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Text.RegularExpressions;
 using uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions;
 using uk.JohnCook.dotnet.EditableCMDLibrary.Interop;
 using uk.JohnCook.dotnet.EditableCMDLibrary.Utils;
@@ -16,11 +17,11 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.InputProcessing
     public class AutoComplete
     {
         private AutoCompleteMode autoCompleteMode = AutoCompleteMode.None;
-        private string[] autoCompleteList;
+        private string[]? autoCompleteList;
         private int autoCompleteListPosition = -1;
         private string autoCompletePrecedingText = string.Empty;
         private bool autoCompleteRetainDoubleQuotes = false;
-        private readonly ConsoleState state = null;
+        private readonly ConsoleState state;
 
         /// <summary>
         /// Creates an autocomplete session.
@@ -107,7 +108,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.InputProcessing
                 // Create the search string - everything after the cursor is discarded
                 currentString = state.Input.Text.ToString()[stringStartPosition..positionInCommand];
                 // If Rule 3 applied on the first autocompletion, the double quotes get retained.
-                if (autoCompleteListPosition == -1)
+                if (autoCompleteList == null)
                 {
                     autoCompleteRetainDoubleQuotes = currentString.Length > 0 && currentString[0] == '"';
                 }
@@ -115,11 +116,11 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.InputProcessing
             // Remove any double quotes from the search string
             currentString = currentString.Replace("\"", string.Empty);
             // If on the first autocompletion, cycle to the first (Tab) or last (Shift+Tab) result
-            if (autoCompleteListPosition < 0)
+            if (autoCompleteList == null)
             {
                 // TODO: Look at preceding word, if any, to switch between file/directory/both completion
                 string autoCompleteEnvVar = string.Empty;
-                string autoCompleteEnvVarString = string.Empty;
+                string? autoCompleteEnvVarString = string.Empty;
                 string autoCompleteDir = state.CurrentDirectory;
                 string autoCompleteFile = currentString;
                 // If there is a %, try to parse as an environment variable
@@ -152,27 +153,28 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.InputProcessing
                 {
                     int lastSeparatorCharPosition = currentString.LastIndexOf(Path.DirectorySeparatorChar);
                     autoCompleteDir = currentString[0..lastSeparatorCharPosition];
-                    if (string.IsNullOrEmpty(autoCompleteDir))
+                    if (string.IsNullOrEmpty(autoCompleteDir) && Path.IsPathRooted(state.CurrentDirectory))
                     {
-                        autoCompleteDir = Path.GetPathRoot(state.CurrentDirectory);
+                        autoCompleteDir = Path.GetPathRoot(state.CurrentDirectory)!;
                     }
                     autoCompleteFile = currentString[(lastSeparatorCharPosition + 1)..];
                 }
                 // If there is a :, try to parse a drive letter
                 if ((autoCompleteDir == state.CurrentDirectory && autoCompleteFile.Contains(":")) || autoCompleteDir.Contains(":"))
                 {
-                    string[] dirColonSplit = null;
+                    string[]? dirColonSplit = null;
                     if (currentString.Length > 0)
                     {
                         dirColonSplit = currentString.Split(':', 2);
                     }
-                    else if (Path.GetPathRoot(autoCompleteDir).Equals(autoCompleteDir))
+                    else if (Path.GetPathRoot(autoCompleteDir)?.Equals(autoCompleteDir) == true)
                     {
                         dirColonSplit = autoCompleteDir.Split(':', 2);
                     }
-                    if (dirColonSplit?.Length == 2)
+                    if (dirColonSplit?.Length == 2 && Regex.Matches(dirColonSplit[0].ToUpper(), "[A-Z]").Any())
                     {
-                        autoCompleteDir = Path.GetPathRoot(string.Concat(dirColonSplit[0], ":\\"));
+                        string pathRoot = string.Concat(dirColonSplit[0], ":\\");
+                        autoCompleteDir = Path.GetPathRoot(pathRoot)!;
                         autoCompleteFile = dirColonSplit[1];
                         if (autoCompleteFile.Contains(Path.DirectorySeparatorChar))
                         {
@@ -225,7 +227,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.InputProcessing
                     // The search path is relative to the root of the drive, fix double slash after colon - TODO: Make earlier parsing do this
                     else if (currentString.StartsWith('\\'))
                     {
-                        autoCompleteList = autoCompleteList.Select(path => path.Replace(Path.GetPathRoot(autoCompleteDir), "\\")).ToArray();
+                        autoCompleteList = autoCompleteList.Select(path => path.Replace(Path.GetPathRoot(autoCompleteDir)!, "\\")).ToArray();
                     }
                     // The search path is relative to the current directory
                     else if (!currentString.Contains(':'))
@@ -265,7 +267,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.InputProcessing
                 }
             }
             // If on a subsequent autocompletion, cycle to the next/previous result
-            else if (autoCompleteListPosition >= 0)
+            else if (autoCompleteList != null && autoCompleteListPosition >= 0)
             {
                 state.InputClear(true, autoCompletePrecedingText.Length + 1);
                 if (!reverseDirection)
