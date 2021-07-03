@@ -153,9 +153,12 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.InputProcessing
                 {
                     int lastSeparatorCharPosition = currentString.LastIndexOf(Path.DirectorySeparatorChar);
                     autoCompleteDir = currentString[0..lastSeparatorCharPosition];
-                    if (string.IsNullOrEmpty(autoCompleteDir) && Path.IsPathRooted(state.CurrentDirectory))
+                    if (string.IsNullOrEmpty(autoCompleteDir))
                     {
-                        autoCompleteDir = Path.GetPathRoot(state.CurrentDirectory)!;
+                        if (StringUtils.TryGetPathRoot(state.CurrentDirectory, out string? pathRoot))
+                        {
+                            autoCompleteDir = pathRoot;
+                        }
                     }
                     autoCompleteFile = currentString[(lastSeparatorCharPosition + 1)..];
                 }
@@ -171,10 +174,13 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.InputProcessing
                     {
                         dirColonSplit = autoCompleteDir.Split(':', 2);
                     }
-                    if (dirColonSplit?.Length == 2 && Regex.Matches(dirColonSplit[0].ToUpper(), "[A-Z]").Any())
+                    if (dirColonSplit?.Length == 2)
                     {
-                        string pathRoot = string.Concat(dirColonSplit[0], ":\\");
-                        autoCompleteDir = Path.GetPathRoot(pathRoot)!;
+                        string constructedPathRoot = string.Concat(dirColonSplit[0], ":\\");
+                        if (StringUtils.TryGetPathRoot(constructedPathRoot, out string? pathRoot))
+                        {
+                            autoCompleteDir = pathRoot;
+                        }
                         autoCompleteFile = dirColonSplit[1];
                         if (autoCompleteFile.Contains(Path.DirectorySeparatorChar))
                         {
@@ -227,7 +233,10 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.InputProcessing
                     // The search path is relative to the root of the drive, fix double slash after colon - TODO: Make earlier parsing do this
                     else if (currentString.StartsWith('\\'))
                     {
-                        autoCompleteList = autoCompleteList.Select(path => path.Replace(Path.GetPathRoot(autoCompleteDir)!, "\\")).ToArray();
+                        if (StringUtils.TryGetPathRoot(autoCompleteDir, out string? pathRoot))
+                        {
+                            autoCompleteList = autoCompleteList.Select(path => path.Replace(pathRoot, "\\")).ToArray();
+                        }
                     }
                     // The search path is relative to the current directory
                     else if (!currentString.Contains(':'))

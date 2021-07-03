@@ -262,6 +262,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <summary>
         /// Initialise the console
         /// </summary>
+        [MemberNotNull(nameof(title))]
         [MemberNotNull(nameof(InputEncoding))]
         [MemberNotNull(nameof(OutputEncoding))]
         private void InitConsole()

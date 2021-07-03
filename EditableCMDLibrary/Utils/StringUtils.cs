@@ -294,6 +294,18 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
                 : string.Format(strings.win10VersionFormat, Environment.OSVersion.Version.Major, Environment.OSVersion.Version.Minor, Environment.OSVersion.Version.Build, updateBuildVersion);
         }
 
+        /// <summary>
+        /// Nullable-aware wrapper around <seealso cref="Path.GetPathRoot(string?)"/>.
+        /// </summary>
+        /// <param name="path">The path to get the root for.</param>
+        /// <param name="pathRoot">The root for the path.</param>
+        /// <returns>True if <paramref name="pathRoot"/> is not null. False if <paramref name="pathRoot"/> is null.</returns>
+        public static bool TryGetPathRoot(string path, [NotNullWhen(true)] out string? pathRoot)
+        {
+            pathRoot = Path.GetPathRoot(path);
+            return pathRoot != null;
+        }
+
         #endregion
 
         #region Logging
