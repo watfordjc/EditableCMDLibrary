@@ -56,7 +56,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <summary>
         /// A queue containing the output from the executable if <see cref="StoreOutput"/> is true.
         /// </summary>
-        public Queue<string>? Output { get; private set; }
+        public Queue<string> Output { get; private set; }
         /// <summary>
         /// The exit code from the executable.
         /// </summary>
@@ -89,10 +89,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
             DisplayOutput = displayOutput;
             ExitCode = 0;
             Finished = false;
-            if (StoreOutput)
-            {
-                Output = new();
-            }
+            Output = new();
             Completed += OnComplete;
             processStartInfo = new()
             {
@@ -215,7 +212,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
                 {
                     continue;
                 }
-                Output?.Enqueue(currentLine);
+                Output.Enqueue(currentLine);
                 NewOutput?.Invoke(this, 1);
                 if (DisplayOutput)
                 {

@@ -33,7 +33,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Commands
         /// <summary>
         /// An array of the keys handled by the plugin. For commands, this should be <see cref="ConsoleKey.Enter"/>.
         /// </summary>
-        public abstract ConsoleKey[] KeysHandled { get; }
+        public abstract ConsoleKey[]? KeysHandled { get; }
         /// <summary>
         /// Whether the plugin handles keys/commands input in normal mode (such as a command entered at the prompt).
         /// </summary>
@@ -49,7 +49,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Commands
         /// <summary>
         /// An array of commands handled by the plugin, in lowercase.
         /// </summary>
-        public abstract string[] CommandsHandled { get; }
+        public abstract string[]? CommandsHandled { get; }
 
         /// <summary>
         /// Called when adding an implementation of the interface to the list of event handlers. Approximately equivalent to a constructor.
@@ -61,11 +61,11 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Commands
         }
 
         /// <summary>
-        /// Event handler for a <see cref="KeyPress"/>, or a command <c> if (<paramref name="e"/>.Key == <see cref="ConsoleKey.Enter"/>)</c>.
+        /// Event handler for a <see cref="KeyPress"/>, or a command <c>if (<paramref name="e"/>.Key == <see cref="ConsoleKey.Enter"/>)</c>.
         /// </summary>
         /// <param name="sender">Sender of the event</param>
         /// <param name="e">The ConsoleKeyEventArgs for the event</param>
-        public void ProcessCommand(object sender, NativeMethods.ConsoleKeyEventArgs e)
+        public void ProcessCommand(object? sender, NativeMethods.ConsoleKeyEventArgs e)
         {
             e.Handled = false;
             return;

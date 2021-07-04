@@ -483,7 +483,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <param name="sender">The sender of the event.</param>
         /// <param name="e">The EditModeChangeEventArgs for the event.</param>
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public void OnEditModeChanged(object sender, EditModeChangeEventArgs e)
+        public void OnEditModeChanged(object? sender, EditModeChangeEventArgs e)
         {
             bool editModeEnabled = e.EditModeEnabled;
             if (EditMode == editModeEnabled)

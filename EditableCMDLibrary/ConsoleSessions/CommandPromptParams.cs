@@ -42,7 +42,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// </summary>
         /// <param name="callingExectuable">The executable that called/started the application.</param>
         /// <param name="args">The command-line arguments used when starting the application.</param>
-        public CommandPromptParams(string callingExectuable, string[] args)
+        public CommandPromptParams(string? callingExectuable, string[] args)
         {
             if (!string.IsNullOrEmpty(callingExectuable))
             {
