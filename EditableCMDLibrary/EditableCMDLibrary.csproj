@@ -5,8 +5,8 @@
     <RootNamespace>uk.JohnCook.dotnet.EditableCMDLibrary</RootNamespace>
     <Authors>John Cook</Authors>
     <PackageId>uk.JohnCook.dotnet.EditableCMDLibrary</PackageId>
-    <AssemblyVersion>0.1.0.0</AssemblyVersion>
-    <Version>0.1.0</Version>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <Version>0.2.0</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Description>Library for EditableCMD and its plugins.</Description>
     <Copyright>© John Cook.</Copyright>
