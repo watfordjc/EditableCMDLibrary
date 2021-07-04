@@ -102,8 +102,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         /// <summary>
         /// When system user preferences change, refresh cached values
         /// </summary>
-        /// <param name="sender">Sender of the event.</param>
-        /// <param name="e">Event arguments.</param>
+        /// <inheritdoc cref="UserPreferenceChangedEventHandler.Invoke(object, UserPreferenceChangedEventArgs)" path="param"/>
         [MethodImpl(MethodImplOptions.Synchronized)]
         public static void SystemEvents_UserPreferenceChanged(object? sender, UserPreferenceChangedEventArgs e)
         {
@@ -366,7 +365,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Utils
         /// <summary>
         /// Converts a <seealso href="https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes">Win32 System Error Code</seealso> into a string that follows the output formatting of errors in NET.exe.
         /// </summary>
-        /// <param name="errorCode">The Win32 error code.</param>
+        /// <inheritdoc cref="GetErrorMessageFromErrorCode(uint)" path="param"/>
         /// <returns>The error Message string formatted in the same way as NET.exe output.</returns>
         public static string GetNetCommandStatusStringFromErrorCode(uint errorCode)
         {

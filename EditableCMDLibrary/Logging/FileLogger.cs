@@ -18,13 +18,9 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Logging
         /// The filename of the log-like file (does not include the path).
         /// </summary>
         public string LogFile { get; }
-        /// <summary>
-        /// The description of the file/log used for printing errors during debugging.
-        /// </summary>
+        /// <inheritdoc cref="IInputLogger.LogDescription"/>
         public string LogDescription { get; set; }
-        /// <summary>
-        /// Whether the log can be written to.
-        /// </summary>
+        /// <inheritdoc cref="IInputLogger.IsWriteable"/>
         public bool IsWriteable { get; private set; }
 
         /// <summary>
@@ -43,9 +39,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Logging
         /// <summary>
         /// Writes a string to the logger's file.
         /// </summary>
-        /// <param name="s">The string to write.</param>
-        /// <param name="append">True to append to the file. False to truncate the file if it exists and replace its content with the formmated string.</param>
-        /// <returns>True on success.</returns>
+        /// <inheritdoc cref="IInputLogger.Log(string, bool)" path="param|returns"/>
         public bool Log(string s, bool append = true)
         {
             if (LogDirectory is null || LogFile is null)
@@ -88,10 +82,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.Logging
         /// <summary>
         /// Writes a formmated string to the logger's file, using <see cref="string.Format(string, object[])"/>.
         /// </summary>
-        /// <param name="format">The format string to pass to <see cref="string.Format(string, object?)"/>.</param>
-        /// <param name="args">The arguments to pass to <see cref="string.Format(string, object?)"/>.</param>
-        /// <param name="append">True to append to the file. False to truncate the file if it exists and replace its content with the formmated string.</param>
-        /// <returns>True on success.</returns>
+        /// <inheritdoc cref="IInputLogger.FormattedLog(string, object[], bool)" path="param|returns"/>
         public bool FormattedLog(string format, object[] args, bool append = true)
         {
             return Log(string.Format(format, args), append);

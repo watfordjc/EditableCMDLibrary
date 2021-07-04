@@ -303,8 +303,7 @@ namespace uk.JohnCook.dotnet.EditableCMDLibrary.ConsoleSessions
         /// <summary>
         /// Forwards static system event for user preference changes.
         /// </summary>
-        /// <param name="sender">The sender of the event.</param>
-        /// <param name="e">The event arguments.</param>
+        /// <inheritdoc cref="UserPreferenceChangedEventHandler.Invoke(object, UserPreferenceChangedEventArgs)" path="param"/>
         [MethodImpl(MethodImplOptions.Synchronized)]
         private void OnUserPreferenceChanged(object? sender, UserPreferenceChangedEventArgs e)
         {
